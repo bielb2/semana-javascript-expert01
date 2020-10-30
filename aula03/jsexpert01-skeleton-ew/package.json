@@ -3,14 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "assets": "npx http-server --cors -p 8081 assets/",
-    "dev": "npx http-server --cors -p 8080 public/"
+    "assets": "yarn http-server --cors -p 8081 assets/",
+    "dev": "yarn http-server --cors -p 8080 public/"
   },
   "license": "MIT",
   "devDependencies": {
     "http-server": "^0.12.3"
-  },
-  "dependencies": {
-    "mp4box": "^0.3.20"
   }
 }

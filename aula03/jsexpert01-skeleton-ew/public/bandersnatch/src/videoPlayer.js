@@ -2,7 +2,7 @@ class VideoMediaPlayer{
   constructor({ manifestJSON }) {
     this.manifestJSON = manifestJSON
     this.videoElement = null
-    this.sourceBuffer = null
+    this.sourceBuffer = null  
   }
 
   initializeCodec() {
@@ -14,9 +14,9 @@ class VideoMediaPlayer{
     }
 
     const codecSupported = MediaSource.isTypeSupported(this.manifestJSON.codec)
-      if(!codecSupported) {
-        alert(`Seu browser não suporta o codec: ${this.manifestJSON.codec}`)
-        return;
-      }
+        if(!codecSupported) {
+            alert(`Seu browser nao suporta o codec: ${this.manifestJSON.codec}`)
+            return;
+        }
   }
 }
