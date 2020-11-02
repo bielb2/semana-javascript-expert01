@@ -1,9 +1,11 @@
 class VideoMediaPlayer{
-  constructor({ manifestJSON, network }) {
+  constructor({ manifestJSON, network, videoComponent }) {
     this.manifestJSON = manifestJSON
     this.network = network
+    this.videoComponent = videoComponent
     this.videoElement = null
     this.sourceBuffer = null  
+    this.activeItem = {}
     this.selected = {}
     this.videoDuration = 0
   }
@@ -28,15 +30,42 @@ class VideoMediaPlayer{
         
       }
 
-        sourceOpenWrapper(mediaSource) {
-          return async(_) => {
-            this.sourceBuffer = mediaSource.addSourceBuffer(this.manifestJSON.codec)
-            const selected = this.selected = this.manifestJSON.intro
-        //  evita rodar como liveS
-            mediaSource.duration = this.videoDuration
-            await this.fileDownload(selected.url)
+  sourceOpenWrapper(mediaSource) {
+    return async(_) => {
+      this.sourceBuffer = mediaSource.addSourceBuffer(this.manifestJSON.codec)
+      const selected = this.selected = this.manifestJSON.intro
+        // evita rodar como liveS
+      mediaSource.duration = this.videoDuration
+      await this.fileDownload(selected.url)
+      this.waitForQuestions()
+      setInterval(this.waitForQuestions.bind(this), 200)
     }
   }
+
+  waitForQuestions() {
+    const currentTime = parseInt(this.videoElement.currentTime)
+    const option = this.selected.at === currentTime
+    if(!option) return;
+    // evita que o modal seja aberto 2x no mesmo segundo
+    if(this.activeItem.url === this.selected.url) return;
+
+    this.videoComponent.configureModal(this.selected.options)
+    this.activeItem = this.selected
+  }
+
+  async nextChunk(data) {
+    const key = data.toLowerCase()
+    const selected = this.manifestJSON[key]
+    this.selected = {
+      ...selected,
+      // ajuste no tempo para o modal aparecer, baseado no tempo atual
+      at: parseInt(this.videoElement.currentTime + selected.at)
+    }
+    // deixa o restante do video rodar enquanto baixa o novo video
+    this.videoElement.play()
+    await this.fileDownload(selected.url)
+  }
+
   async fileDownload(url) {
     const prepareUrl = {
       url,
