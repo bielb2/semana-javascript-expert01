@@ -3,11 +3,13 @@ class VideoMediaPlayer{
     this.manifestJSON = manifestJSON
     this.network = network
     this.videoComponent = videoComponent
+
     this.videoElement = null
     this.sourceBuffer = null  
     this.activeItem = {}
     this.selected = {}
     this.videoDuration = 0
+    this.selections = []
   }
 
   initializeCodec() {
@@ -53,23 +55,47 @@ class VideoMediaPlayer{
     this.activeItem = this.selected
   }
 
+  async currentFileResolution() {
+    const LOWEST_RESOLUTION = 144
+    const prepareUrl = {
+      url: this.manifestJSON.finalizar.url,
+      fileResolution: LOWEST_RESOLUTION,
+      fileResolutionTag: this.manifestJSON.fileResolutionTag,
+      hostTag: this.manifestJSON.hostTag,
+    }
+    const url = this.network.parseManifestURL(prepareUrl)
+    return this.network.getProperResolution(url)
+  }
+  
   async nextChunk(data) {
+    
     const key = data.toLowerCase()
     const selected = this.manifestJSON[key]
     this.selected = {
       ...selected,
       // ajuste no tempo para o modal aparecer, baseado no tempo atual
-      at: parseInt(this.videoElement.currentTime + selected.at)
+      at: parseInt(this.videoElement.currentTime  + selected.at)
     }
+    this.manageLag(this.selected)
     // deixa o restante do video rodar enquanto baixa o novo video
     this.videoElement.play()
     await this.fileDownload(selected.url)
   }
 
+  manageLag(selected) {
+    if(!!~this.selections.indexOf(selected.url)) {
+      selected.at += 5
+      return;
+    }
+
+    this.selections.push(selected.url)
+  }
   async fileDownload(url) {
+    const fileResolution = await this.currentFileResolution()
+    console.log("currentResolution -> fileResolution", fileResolution)
     const prepareUrl = {
       url,
-      fileResolution: 360,
+      fileResolution,
       fileResolutionTag: this.manifestJSON.fileResolutionTag,
       hostTag: this.manifestJSON.hostTag
     }
@@ -86,8 +112,8 @@ class VideoMediaPlayer{
     const [name, videoDuration] = bars[bars.length - 1].split('-')
     // split '-' = '01.intro' '12.733333' '360.mp4'
     // videoDuration = 012.733333
-
-    this.videoDuration += videoDuration
+    this.videoDuration += parseFloat(videoDuration)
+    console.log("setVideoPlayerDuration -> videoDuration", this.videoDuration)
   }
   async processBufferSegments(allSegments) {
     const sourceBuffer = this.sourceBuffer
